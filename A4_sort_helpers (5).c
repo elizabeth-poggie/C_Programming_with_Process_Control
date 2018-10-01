@@ -1,8 +1,6 @@
 #include "A4_sort_helpers.h"
 
-// Function: read_all() 
-// Provided to read an entire file, line by line.
-// No need to change this one.
+// Function is to read an entire file, line by line.
 void read_all( char *filename ){
     
     FILE *fp = fopen( filename, "r" );
@@ -18,9 +16,7 @@ void read_all( char *filename ){
     fclose(fp);
 }
 
-// Function: read_all() 
-// Provided to read only the lines of a file staring with first_letter.
-// No need to change this one.
+// Function is to read only the lines of a file staring with first_letter.
 void read_by_letter( char *filename, char first_letter ){
 
     FILE *fp = fopen( filename, "r" );
@@ -43,7 +39,7 @@ void read_by_letter( char *filename, char first_letter ){
     fclose(fp);
 }
 
-// YOU COMPLETE THIS ENTIRE FUNCTION FOR Q1.
+// simple single threaded sorting insertion sort
 void sort_words( ){
   for (int i=1; i<MAX_NUMBER_LINES; i++){
     if(text_array[i][0] == '\0'){
@@ -71,23 +67,23 @@ void sort_words( ){
 
 sem_t *semies[27];
 
-// YOU COMPLETE THIS ENTIRE FUNCTION FOR Q2.
+//  adding semaphore-based synchronization 
 int initialize( ){
 
   //initializing semies
-  sem_unlink("semie_boi_a");
-  semies[1] = sem_open("semie_boi_a", O_CREAT, 0666, 1);
+  sem_unlink("semie_a");
+  semies[1] = sem_open("semie_a", O_CREAT, 0666, 1);
   
   int letter = 96;
   for (int i=2; i<27; i++) {
     char string[50];
-    sprintf(string, "semie_boi_%c", (char)(i+letter));
+    sprintf(string, "semie_%c", (char)(i+letter));
     sem_unlink(string);
     semies[i] = sem_open(string, O_CREAT, 0666, 0);
   }
   
-  sem_unlink("semie_boi_final");
-  semies[0] = sem_open("semie_boi_final", O_CREAT, 0666, 0);
+  sem_unlink("semie_final");
+  semies[0] = sem_open("semie_final", O_CREAT, 0666, 0);
 
   //initaliziing new file
   FILE *fp = fopen("mr_test.txt", "w");
@@ -99,8 +95,8 @@ int initialize( ){
 
   return 0;
 }
-
-// YOU MUST COMPLETE THIS FUNCTION FOR Q2 and Q3.   
+ 
+//multi-process control 
 int process_by_letter( char* input_filename, char first_letter ){
 
   int index = (first_letter - 97 + 1);
@@ -128,45 +124,27 @@ int process_by_letter( char* input_filename, char first_letter ){
   } else if ((index+1) > 26){
     sem_post(semies[0]);
   }
-  
-    // For Q3, uncomment the following 2 lines and integrate them with your overall solution.
-    // read_by_letter( input_filename, first_letter );
-    // sort_words( );
 
     return 0;
-}
 
-// YOU COMPLETE THIS ENTIRE FUNCTION FOR Q2 and Q3.
 int finalize( ){
-    // For Q2, keep the following 2 lines in your solution (maybe not at the start).
-    // Add lines above or below to ensure the "Sorting complete!" line
-    // is printed at the very end, after all letter lines.
     
   // have a sem_wait here that hangs out until the z function happens
   
   sem_wait(semies[0]);
 
-  //char large_boi[sizeof(text_array)];
-  //fread(large_boi, 1, sizeof(text_array), fp);
-
   read_all("mr_test.txt");
-  int boi = 0;
-  while (text_array[boi][0] != '\0'){
-    write(1, text_array[boi], strlen(text_array[boi]));
-    boi++;
+  int b = 0;
+  while (text_array[b][0] != '\0'){
+    write(1, text_array[b], strlen(text_array[b]));
+    b++;
   }
 
-  //write(1, text_array, sizeof(text_array));
 
   //move sorting complete to end
   sprintf( buf, "Sorting complete!\n" );
   write(1, buf, strlen(buf));
 
-
-    // For Q3, come up with a way to accumulate the sorted results from each
-    // letter process and print the overal sorted values to standard out.
-    // You are not allowed to read from the input file, or call sort_words
-    // directly from this function.
   fflush(stdout);
     return 0;
 }
